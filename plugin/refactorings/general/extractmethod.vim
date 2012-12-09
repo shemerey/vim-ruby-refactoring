@@ -258,10 +258,11 @@ function! s:em_insert_new_method(name, selection, parameters, retvals, block_end
 
   " Insert call to new method, and fix up the source so it makes sense
   if has_trailing_newline
-    exec "normal i" . (len(a:retvals) > 0 ? method_retvals . " = " : "") . a:name . method_params . "\n"
     normal k
+    call append(".", [ (len(a:retvals) > 0 ? method_retvals . " = " : "") . a:name . method_params ] )
+    normal j
   else
-    exec "normal i" . a:name 
+    exec "normal i" . a:name . method_params 
   end
 
   " Reset cursor position

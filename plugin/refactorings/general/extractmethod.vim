@@ -221,7 +221,9 @@ function! s:ruby_identify_variables( tuples )
       let assigned = deepcopy(referenced)
       let referenced = []
     elseif tuple[0] == "VAR" && !s:is_target_of_rspec_let(tuple[1])
-      call add(referenced,tuple[1])
+      if tuple[1] !~ '[A-Z]\C'
+        call add(referenced,tuple[1])
+      end
     endif
   endfor
 
@@ -240,8 +242,13 @@ function! s:em_insert_new_method(name, selection, parameters, retvals, block_end
 
   " Build new method text, split into a list for easy insertion
   let method_params = ""
-  if len(a:parameters) > 0 
-    let method_params = "(" . join(a:parameters, ", ") . ")"
+  if len(a:parameters) > 0
+    let method_params = join(a:parameters, ", ")
+    if exists('g:ruby_refactoring_sans_superfluous_syntax')
+      let method_params = ' ' . method_params
+    else
+      let method_params = "(" . method_params . ")"
+    end
   endif
 
   let method_retvals = ""

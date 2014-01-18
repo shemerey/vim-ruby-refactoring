@@ -8,11 +8,11 @@ class Buz
     # Vjj to highlight a few of these, then do <leader>rem
     # ^ note the capital (to do linewise selection, not charwise)
     do_a
-    do_b_with x
+    do_b_with(x)
     do_c
   end
 
-  def do_b_with x
+  def do_b_with(x)
     do_b x
   end
 end

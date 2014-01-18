@@ -8,99 +8,99 @@ function! ExtractMethod() range
     echo v:exception
     return
   endtry
-  
+
   let [block_start, block_end] = common#get_range_for_block('\<def\|it\>','Wb')
 
-  let pre_selection = join( getline(block_start+1,a:firstline-1), "\n" )
-  let pre_selection_variables = s:ruby_determine_variables(pre_selection)
+  " let pre_selection = join( getline(block_start+1,a:firstline-1), "\n" )
+  " let pre_selection_variables = s:ruby_determine_variables(pre_selection)
 
-  let post_selection = join( getline(a:lastline+1,block_end), "\n" )
-  let post_selection_variables = s:ruby_determine_variables(post_selection)
+  " let post_selection = join( getline(a:lastline+1,block_end), "\n" )
+  " let post_selection_variables = s:ruby_determine_variables(post_selection)
 
   let selection = common#cut_visual_selection()
-  let selection_variables = s:ruby_determine_variables(selection)
+"   let selection_variables = s:ruby_determine_variables(selection)
 
   let parameters = []
   let retvals = []
 
   " determine parameters
-  for var in selection_variables[1]
-    call insert(parameters,var)
-  endfor
+  " for var in selection_variables[1]
+  "   call insert(parameters,var)
+  " endfor
 
-  let parameters = s:sort_parameters_by_declaration(parameters)
-
-  for var in selection_variables[0]
-    if index(post_selection_variables[1], var) != -1
-      call insert(retvals, var)
-    endif
-  endfor
+  " let parameters = s:sort_parameters_by_declaration(parameters)
+  "
+  " for var in selection_variables[0]
+  "   if index(post_selection_variables[1], var) != -1
+  "     call insert(retvals, var)
+  "   endif
+  " endfor
 
   call s:em_insert_new_method(name, selection, parameters, retvals, block_end)
 endfunction
 
-function! s:sort_parameters_by_declaration(parameters)
-  if (len(a:parameters) <= 1)
-    return a:parameters
-  endif
-  let pairs = s:build_parameter_declaration_position_pairs(a:parameters)
-  call sort(pairs, "s:sort_parameter_declaration_position_pairs")
-  return s:parameter_names_of(pairs)
-endfunction
+" function! s:sort_parameters_by_declaration(parameters)
+"   if (len(a:parameters) <= 1)
+"     return a:parameters
+"   endif
+"   let pairs = s:build_parameter_declaration_position_pairs(a:parameters)
+"   call sort(pairs, "s:sort_parameter_declaration_position_pairs")
+"   return s:parameter_names_of(pairs)
+" endfunction
 
-function! s:build_parameter_declaration_position_pairs(parameters)
-  let cursor_position = getpos(".")
-  let pairs = []
+" function! s:build_parameter_declaration_position_pairs(parameters)
+"   let cursor_position = getpos(".")
+"   let pairs = []
+"
+"   for parm in a:parameters
+"     if (searchdecl(parm) == 0) " could find and position cursor at parameter declaration
+"       call insert(pairs, [parm, getpos(".")])
+"     else
+"       call insert(pairs, [parm, getpos("$")]) " use end of file to sink to bottom
+"     endif
+"     call setpos(".",cursor_position)
+"   endfor
+"
+"   return pairs
+" endfunction
 
-  for parm in a:parameters
-    if (searchdecl(parm) == 0) " could find and position cursor at parameter declaration
-      call insert(pairs, [parm, getpos(".")])
-    else
-      call insert(pairs, [parm, getpos("$")]) " use end of file to sink to bottom
-    endif
-    call setpos(".",cursor_position) 
-  endfor
+" function! s:sort_parameter_declaration_position_pairs(pair1, pair2)
+"   let lineIndex = 1
+"   let colIndex = 2
+"   if (a:pair1[1][lineIndex] == a:pair2[1][lineIndex])
+"     return a:pair1[1][colIndex] - a:pair2[1][colIndex]
+"   else
+"     return a:pair1[1][lineIndex] - a:pair2[1][lineIndex]
+"   endif
+" endfunction
 
-  return pairs
-endfunction
+" function! s:parameter_names_of(pairs)
+"   let sorted_parameters = []
+"   for pair in a:pairs
+"     call extend(sorted_parameters, [pair[0]])
+"   endfor
+"   return sorted_parameters
+" endfunction
 
-function! s:sort_parameter_declaration_position_pairs(pair1, pair2)
-  let lineIndex = 1
-  let colIndex = 2
-  if (a:pair1[1][lineIndex] == a:pair2[1][lineIndex])
-    return a:pair1[1][colIndex] - a:pair2[1][colIndex]
-  else
-    return a:pair1[1][lineIndex] - a:pair2[1][lineIndex]
-  endif
-endfunction
-
-function! s:parameter_names_of(pairs)
-  let sorted_parameters = []
-  for pair in a:pairs
-    call extend(sorted_parameters, [pair[0]])
-  endfor
-  return sorted_parameters
-endfunction
-
-function! s:ruby_determine_variables(block) 
-  let tokens = s:ruby_tokenize(a:block)
-  let statements = s:ruby_identify_tokens(tokens)
-
-  let assigned = []
-  let referenced = []
-
-  for statement in statements 
-    call s:ruby_identify_methods( statement )
-    let results = s:ruby_identify_variables( statement )
-    call extend(assigned,results[0])
-    call extend(referenced,results[1])
-  endfor
-
-  call common#dedupe_list(assigned)
-  call common#dedupe_list(referenced)
-
-  return [assigned,referenced]
-endfunction
+" function! s:ruby_determine_variables(block)
+"   let tokens = s:ruby_tokenize(a:block)
+"   let statements = s:ruby_identify_tokens(tokens)
+"
+"   let assigned = []
+"   let referenced = []
+"
+"   for statement in statements
+"     call s:ruby_identify_methods( statement )
+"     let results = s:ruby_identify_variables( statement )
+"     call extend(assigned,results[0])
+"     call extend(referenced,results[1])
+"   endfor
+"
+"   call common#dedupe_list(assigned)
+"   call common#dedupe_list(referenced)
+"
+"   return [assigned,referenced]
+" endfunction
 
 " Synopsis:
 " Splits a block of code into individual statements, then splits said
@@ -126,7 +126,7 @@ endfunction
 " Determines what each of a list of strings is with respect to the ruby
 " language.  E.g. keywords, operators, variables, methods
 "
-" TODO: Improve this with ref to http://www.zenspider.com/Languages/Ruby/QuickRef.html#4 
+" TODO: Improve this with ref to http://www.zenspider.com/Languages/Ruby/QuickRef.html#4
 function! s:ruby_identify_tokens( tokenlist )
   let symbols = []
   let statements = []
@@ -149,23 +149,23 @@ function! s:ruby_identify_tokens( tokenlist )
       let sym = "CONST"
     elseif token[0] == "'" || token[0] == '"'
       let sym = "STR"
-    elseif token == '#' 
+    elseif token == '#'
       let ignore_to_eos = 1
-    elseif token == '=' 
+    elseif token == '='
       let sym = 'ASSIGN'
-    elseif token == ',' 
+    elseif token == ','
       let sym = 'COMMA'
-    elseif token == '"' 
+    elseif token == '"'
       let sym = 'DQUOTE'
-    elseif token == "'" 
+    elseif token == "'"
       let sym = 'SQUOTE'
-    elseif token == '(' 
+    elseif token == '('
       let sym = 'LPAREN'
-    elseif token == ')' 
+    elseif token == ')'
       let sym = 'RPAREN'
-    elseif token == ';' 
+    elseif token == ';'
       let sym = "EOS"
-      if len(symbols) > 0 
+      if len(symbols) > 0
         call add(statements, symbols)
         let symbols = []
         let ignore_to_eos = 0
@@ -179,7 +179,7 @@ function! s:ruby_identify_tokens( tokenlist )
       let sym = "COMMENT"
     endif
 
-    if sym != "WS" 
+    if sym != "WS"
       call add(symbols,[sym,token])
     endif
   endfor
@@ -197,7 +197,7 @@ endfunction
 " preceded by 'def'
 function! s:ruby_identify_methods( tuples )
   let lasttuple = []
-  for tuple in a:tuples 
+  for tuple in a:tuples
     let lastsym = get(lasttuple,0,"")
     let sym = tuple[0]
     if ((sym == "LPAREN") && (lastsym == "VAR")) || ((sym == "VAR") && (lastsym == "VAR")) || ((sym == "STR" && lastsym == "VAR"))
@@ -252,16 +252,16 @@ function! s:em_insert_new_method(name, selection, parameters, retvals, block_end
   endif
 
   let method_retvals = ""
-  if len(a:retvals) > 0 
+  if len(a:retvals) > 0
     let method_retvals = join(a:retvals,", ")
   endif
 
   let method_lines = split( "\ndef " . a:name . method_params . "\n" . a:selection . (has_trailing_newline ? "" : "\n") . (len(a:retvals) > 0 ? "return " . method_retvals . "\n" : "") . "end", "\n", 1)
 
-  let start_line_number = a:block_end - len(split(a:selection, "\n", 1)) + 1 
+  let start_line_number = a:block_end - len(split(a:selection, "\n", 1)) + 1
 
   " Insert new method
-  call append(start_line_number, method_lines) 
+  call append(start_line_number, method_lines)
 
   " Insert call to new method, and fix up the source so it makes sense
   if has_trailing_newline
@@ -269,7 +269,7 @@ function! s:em_insert_new_method(name, selection, parameters, retvals, block_end
     call append(".", [ (len(a:retvals) > 0 ? method_retvals . " = " : "") . a:name . method_params ] )
     normal j
   else
-    exec "normal i" . a:name . method_params 
+    exec "normal i" . a:name . method_params
   end
 
   " Reset cursor position
@@ -277,15 +277,15 @@ function! s:em_insert_new_method(name, selection, parameters, retvals, block_end
 
   " Fix indent on call to method in case we corrupted it
   normal V=
-  
+
   " Indent new codeblock
   exec "normal " . (start_line_number+1) . "GV" . len(method_lines) . "j="
 
-  " Jump back again, 
+  " Jump back again,
   call setpos(".", cursor_position)
 
   " Visual mode normally moves the caret, go back
-  if has_trailing_newline 
+  if has_trailing_newline
     normal $
   endif
 endfunction
